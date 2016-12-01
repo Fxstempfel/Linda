@@ -34,7 +34,7 @@ public class CentralizedLinda implements Linda {
 		if (index == -1){
 			//sleep
 		} else {
-			result = tupleSpace.get(index)
+			result = tupleSpace.get(index);
 		}
 	}
 
@@ -92,7 +92,7 @@ public class CentralizedLinda implements Linda {
 		int result;
 		boolean notfound = true;
 		while (notfound && ( i < this.tupleSpace.size())){
-			if (Tuple.matches(tupleSpace(i), template){
+			if (Tuple.matches(tupleSpace(i), template)){
 				notfound = false;
 			}
 			i++;
