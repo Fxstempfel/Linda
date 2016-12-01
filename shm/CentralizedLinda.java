@@ -29,7 +29,13 @@ public class CentralizedLinda implements Linda {
 	}
 
 	public Tuple read(Tuple template) {
-		
+		Tuple result;
+		int index = findNext(0, template);
+		if (index == -1){
+			//sleep
+		} else {
+			result = tupleSpace.get(index)
+		}
 	}
 
 	public Tuple tryTake(Tuple template) {
