@@ -8,7 +8,7 @@ import java.util.*;
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
 	
-	Collection<Tuple> tupleSpace;/* espace des tuples */
+	List<Tuple> tupleSpace;
 
     public CentralizedLinda() {
 		tupleSpace = new ArrayList<Tuple>();
@@ -18,11 +18,14 @@ public class CentralizedLinda implements Linda {
 		tupleSpace.add(t);
 	}
 
+	// First version : it is assumed that the template matches a tuple in the tupleSpace
+	// Need to block if there is no matching tuple
 	public Tuple take(Tuple template) {
-		boolean notFound;
-		while (notFound) {
-			
-		}
+		int i = findNext(0, template);
+		if (i != -1) {
+			Tuple t = tupleSpace.remove(i);
+		} 
+		return t;
 	}
 
 	public Tuple read(Tuple template) {
@@ -30,15 +33,38 @@ public class CentralizedLinda implements Linda {
 	}
 
 	public Tuple tryTake(Tuple template) {
-
+		int i = findNext(0, template);
+		if (i != -1) {
+			Tuple t = tupleSpace.remove(i);
+		} else {
+			Tuple t = null;
+		}
+		return t;
 	}
 
 	public Tuple tryRead(Tuple template) {
 
 	}
 
-	public Collection<Tuple> takeAll(Tuple template) {
+	public List<Tuple> takeAll(Tuple template) {
+		List<Tuple> listMatches = new ArrayList<Tuple>();
+		
+		int i = 0;
+		while (i < tupleSpace.size()) {
+			i = findNext(i); // i is the index of template's next occurence 
+			// If there is no more matching tuples in the tuplespace,
+			// quit the loop
+			if (i == -1) {
+				break;
+			}
+			// Else, pop the matching tuple and add it to the list
+			else {
+				listMatches.add(tupleSpace.remove(index));
+			}
+			i++;
+		}
 
+		return listMatches;
 	}
 
 	public Collection<Tuple> readAll(Tuple template) {
