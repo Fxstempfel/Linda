@@ -8,7 +8,7 @@ import java.util.*;
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
 	
-	Collection<Tuple> tupleSpace;
+	Collection<Tuple> tupleSpace;/* espace des tuples */
 
     public CentralizedLinda() {
 		tupleSpace = new ArrayList<Tuple>();
@@ -26,7 +26,7 @@ public class CentralizedLinda implements Linda {
 	}
 
 	public Tuple read(Tuple template) {
-
+		
 	}
 
 	public Tuple tryTake(Tuple template) {
@@ -42,14 +42,39 @@ public class CentralizedLinda implements Linda {
 	}
 
 	public Collection<Tuple> readAll(Tuple template) {
-
+		
 	}
 
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {	
 
 	}
 
-	public void debug(String prefix) {
+	/**
+	 * returns the index of the next tuple that matches the template in the tuplespace.
+	 * @param startIndex: the index wher to start search (inclusive)
+	 * @param template: the template to match
+	 * @return the index of the next tuple, or -1 if the search reach the end
+	 */
+	private int findNext(int startIndex, Tuple template){
+		int i=startIndex;
+		int result;
+		boolean notfound = true;
+		while (notfound && ( i < this.tupleSpace.size())){
+			if (Tuple.matches(tupleSpace(i), template){
+				notfound = false;
+			}
+			i++;
+		}
+		if (notfound) {
+			result = -1;
+		} else {
+			result = i-1;
+		}
+
+		return result;
+	}
+
+	public void debug(String prefix) {
 
 	}
 
