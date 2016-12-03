@@ -3,14 +3,21 @@ package linda.shm;
 import linda.*;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
-	
+
+	/** TODO: ajouter le reveil en chaine, et ajouter le reveil lors de l'ecriture */
 	private List<Tuple> tupleSpace;
+	private ReentrantLock monitor;
+	private Condition tupleAviable;
 
     public CentralizedLinda() {
 		tupleSpace = new ArrayList<Tuple>();
+		monitor = new ReentrantLock();
+		tupleAviable = monitor.newCondition();
     }
 
     @Override
@@ -22,23 +29,41 @@ public class CentralizedLinda implements Linda {
 	// Need to block if there is no matching tuple
 	@Override
 	public Tuple take(Tuple template) {
+		monitor.lock();
         Tuple t = null;
-		int i = findNext(0, template);
-		if (i != -1) {
-			t = tupleSpace.remove(i);
-		} 
+		while (t == null) {
+			int i = findNext(0, template);
+			if (i != -1) {
+				t = tupleSpace.remove(i);
+			} else {
+				try {
+					tupleAviable.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		monitor.unlock();
 		return t;
 	}
 
 	@Override
 	public Tuple read(Tuple template) {
+		monitor.lock();
 		Tuple result = null;
-		int index = findNext(0, template);
-		if (index == -1){
-			//sleep
-		} else {
-			result = tupleSpace.get(index);
+		while (result == null) {
+			int index = findNext(0, template);
+			if (index == -1) {
+				try {
+					tupleAviable.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} else {
+				result = tupleSpace.get(index);
+			}
 		}
+		monitor.unlock();
 		return result;
 	}
 
