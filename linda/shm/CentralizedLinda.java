@@ -26,6 +26,7 @@ public class CentralizedLinda implements Linda {
 	}
 
 	// First version : it is assumed that the template matches a tuple in the tupleSpace
+	//TODO
 	// Need to block if there is no matching tuple
 	@Override
 	public Tuple take(Tuple template) {
@@ -125,7 +126,7 @@ public class CentralizedLinda implements Linda {
 			if (i == -1) {
 				break;
 			}
-			// Else, pop the matching tuple and add it to the list
+			// Else, get the matching tuple
 			else {
 				listMatches.add(tupleSpace.get(i));
 			}
