@@ -26,7 +26,6 @@ public class CentralizedLinda implements Linda {
 	}
 
 	// First version : it is assumed that the template matches a tuple in the tupleSpace
-	//TODO
 	// Need to block if there is no matching tuple
 	@Override
 	public Tuple take(Tuple template) {
@@ -70,6 +69,7 @@ public class CentralizedLinda implements Linda {
 
 	@Override
 	public Tuple tryTake(Tuple template) {
+		monitor.lock();
 		int i = findNext(0, template);
         Tuple t;
 		if (i != -1) {
@@ -77,11 +77,13 @@ public class CentralizedLinda implements Linda {
 		} else {
 			t = null;
 		}
+		monitor.unlock();
 		return t;
 	}
 
 	@Override
 	public Tuple tryRead(Tuple template) {
+		monitor.lock();
         int i = findNext(0, template);
         Tuple t;
 		if (i != -1) {
@@ -89,11 +91,13 @@ public class CentralizedLinda implements Linda {
 		} else {
 			t = null;
 		}
+		monitor.unlock();
 		return t;
 	}
 
 	@Override
 	public List<Tuple> takeAll(Tuple template) {
+		monitor.lock();
 		List<Tuple> listMatches = new ArrayList<Tuple>();
 		
 		int i = 0;
@@ -110,12 +114,14 @@ public class CentralizedLinda implements Linda {
 			}
 			i++;
 		}
+		monitor.unlock();
 
 		return listMatches;
 	}
 
 	@Override
 	public Collection<Tuple> readAll(Tuple template) {
+		monitor.lock();
 		List<Tuple> listMatches = new ArrayList<Tuple>();
 		
 		int i = 0;
@@ -132,13 +138,36 @@ public class CentralizedLinda implements Linda {
 			}
 			i++;
 		}
+		monitor.unlock();
 
 		return listMatches;
 	}
 
 	@Override
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {	
+		Tuple t;
+		if (timing == eventTiming.IMMEDIATE) {
+			// TODO: should wait for a matching template to be in the TS to be
+			// triggered
+			if (mode == eventMode.TAKE) {
+				t = tryTake(template);
+			} else {
+				// mode == READ
+				t = tryRead(template);
+			}
+			callback.call(t);
 
+		} else {
+			// TODO: should not be triggered at once
+			// timing = FUTURE
+			if (mode == eventMode.TAKE) {
+				t = take(template);
+			} else {
+				// mode = READ
+				t = read(template);
+			}
+			callback.call(t);
+		}
 	}
 
 	/**
@@ -168,8 +197,8 @@ public class CentralizedLinda implements Linda {
 
 	@Override
     public void debug(String prefix) {
-		// Print the tupleSpace
-		System.out.println("TupleSpace : ");
+		// Print the tuples in the tupleSpace
+		System.out.println(prefix + " TupleSpace : ");
 		for (Tuple t : tupleSpace) {
 			System.out.println(t);
 		}
