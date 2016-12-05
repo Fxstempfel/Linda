@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
@@ -12,17 +13,27 @@ public class CentralizedLinda implements Linda {
 	/** TODO: ajouter le reveil en chaine, et ajouter le reveil lors de l'ecriture */
 	private List<Tuple> tupleSpace;
 	private ReentrantLock monitor;
-	private Condition tupleAviable;
+	/** map of the requests:
+	 * Tuple type corresponds to the template requested,
+	 * Condition are used to wake the threads that made this request
+	 */
+	private Map<Tuple, Condition>tupleAviable;
 
     public CentralizedLinda() {
 		tupleSpace = new ArrayList<Tuple>();
 		monitor = new ReentrantLock();
-		tupleAviable = monitor.newCondition();
+		tupleAviable = new HashMap<Tuple, Condition>();
     }
 
     @Override
 	public void write(Tuple t) {
-		tupleSpace.add(t);
+		monitor.lock();
+    	tupleSpace.add(t);
+		Condition condition = popRequest(t);
+		if (condition != null){
+			condition.signal();
+		}
+		monitor.unlock();
 	}
 
 	// First version : it is assumed that the template matches a tuple in the tupleSpace
@@ -37,7 +48,7 @@ public class CentralizedLinda implements Linda {
 				t = tupleSpace.remove(i);
 			} else {
 				try {
-					tupleAviable.await();
+					registerRequest(template).await();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -55,7 +66,9 @@ public class CentralizedLinda implements Linda {
 			int index = findNext(0, template);
 			if (index == -1) {
 				try {
-					tupleAviable.await();
+					Condition condition = registerRequest(template);
+					condition.await();
+					condition.signal();//signal other threads
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -193,6 +206,34 @@ public class CentralizedLinda implements Linda {
 		}
 
 		return result;
+	}
+
+	/**
+	 * register a tuple request inside the Condition collection
+	 * @param template the template we tried to match
+     */
+	private Condition registerRequest(Tuple template){
+		return tupleAviable.getOrDefault(template, monitor.newCondition());
+	}
+
+	/**
+	 * pop a tuple request from the Condition collection
+	 * NOTE: the algorithm makes no differences between read/take
+	 * @param tuple the newly available tuple
+	 * @return the condition associated to the tuple request or null if it don't exist
+     */
+	private Condition popRequest(Tuple tuple){
+		for ( Tuple key : tupleAviable.keySet()){
+			if (tuple.matches(key)){
+				Condition condition = tupleAviable.get(key);
+				// if nobody is waiting for the condition
+				if (!monitor.hasWaiters(condition)) {
+					tupleAviable.remove(key);
+				}
+				return condition;
+			}
+		}
+		return null;
 	}
 
 	@Override
