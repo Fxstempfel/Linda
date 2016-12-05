@@ -42,16 +42,14 @@ public class CentralizedLinda implements Linda {
 	public Tuple take(Tuple template) {
 		monitor.lock();
         Tuple t = null;
-		while (t == null) {
-			int i = findNext(0, template);
-			if (i != -1) {
-				t = tupleSpace.remove(i);
-			} else {
-				try {
-					registerRequest(template).await();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+		int i = findNext(0, template);
+		if (i != -1) {
+			t = tupleSpace.remove(i);
+		} else {
+			try {
+				registerRequest(template).await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 		monitor.unlock();
@@ -62,19 +60,17 @@ public class CentralizedLinda implements Linda {
 	public Tuple read(Tuple template) {
 		monitor.lock();
 		Tuple result = null;
-		while (result == null) {
-			int index = findNext(0, template);
-			if (index == -1) {
-				try {
-					Condition condition = registerRequest(template);
-					condition.await();
-					condition.signal();//signal other threads
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			} else {
-				result = tupleSpace.get(index);
+		int index = findNext(0, template);
+		if (index == -1) {
+			try {
+				Condition condition = registerRequest(template);
+				condition.await();
+				condition.signal();//signal other threads
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
+		} else {
+			result = tupleSpace.get(index);
 		}
 		monitor.unlock();
 		return result;
@@ -125,7 +121,6 @@ public class CentralizedLinda implements Linda {
 			else {
 				listMatches.add(tupleSpace.remove(i));
 			}
-			i++;
 		}
 		monitor.unlock();
 
