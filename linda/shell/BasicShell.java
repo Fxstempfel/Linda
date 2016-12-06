@@ -259,6 +259,8 @@ public class BasicShell {
 					}
 				}
 
+			} else if (token.equals("debug")) {
+				linda.debug("");
 			}else if (token.equals("exit")) {
 				System.out.println("Stopping Linda");
 				break;

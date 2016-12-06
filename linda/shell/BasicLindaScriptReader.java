@@ -65,13 +65,13 @@ public class BasicLindaScriptReader {
 			} else if (currentLine[0].equals("tryTake")) {
 				String name = currentLine[1];
 				Tuple t = linda.tryTake(hm.get(currentLine[2]));
-				if(!t.isEmpty()) {
+				if(t == null || !t.isEmpty()) {
 					hm.put(name, t);
 				}
 			} else if (currentLine[0].equals("tryRead")) {
 				String name = currentLine[1];
 				Tuple t = linda.tryRead(hm.get(currentLine[2]));
-				if(!t.isEmpty()) {
+				if(t == null || !t.isEmpty()) {
 					hm.put(name, t);
 				}
 			} else if (currentLine[0].equals("print")) {
