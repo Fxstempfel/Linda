@@ -12,224 +12,168 @@ public class CentralizedLinda implements Linda {
 
 	/** TODO: ajouter le reveil en chaine, et ajouter le reveil lors de l'ecriture */
 	private List<Tuple> tupleSpace;
-	private ReentrantLock monitor;
+	private Map<Tuple, Callback> pendingReads;
+	private Map<Tuple, Callback> pendingTakes;
 	/** map of the requests:
 	 * Tuple type corresponds to the template requested,
 	 * Condition are used to wake the threads that made this request
 	 */
-	private Map<Tuple, Condition>tupleAviable;
+	//private Map<Tuple, Condition>tupleAviable;
 
     public CentralizedLinda() {
 		tupleSpace = new ArrayList<Tuple>();
-		monitor = new ReentrantLock();
-		tupleAviable = new HashMap<Tuple, Condition>();
+		//tupleAviable = new HashMap<Tuple, Condition>();
+		pendingTakes = new HashMap<Tuple, Callback>();
+		pendingReads = new HashMap<Tuple, Callback>();
     }
 
     @Override
 	public void write(Tuple t) {
-		monitor.lock();
-    	tupleSpace.add(t);
-		Condition condition = popRequest(t);
-		if (condition != null){
-			condition.signal();
+		boolean matchingTake = false;
+		synchronized (int key) {
+			for (Tuple template : pendingReads.keySet()) {
+				if (template.matches(t)) {
+					pendingReads.remove(template).call(t.deepclone());
+				}
+			}
+			for (Tuple template : pendingTries.keySet()) {
+				if (template.matches(t)) {
+					pendingTakes.remove(template).call(t.deepclone());
+					matchingTake = true;
+					break;
+				}
+			}
+			if (!matchingTake) {
+				tupleSpace.add(t.deepclone());
+			}
 		}
-		monitor.unlock();
 	}
 
 	// First version : it is assumed that the template matches a tuple in the tupleSpace
 	// Need to block if there is no matching tuple
 	@Override
 	public Tuple take(Tuple template) {
-		monitor.lock();
-        Tuple t = null;
-		int i = findNext(0, template);
-		if (i != -1) {
-			t = tupleSpace.remove(i);
-		} else {
-			try {
-				registerRequest(template).await();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		callback = new BlockingCallback();
+		eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
+				template, callback);
+		synchronized (int key) {
+			while (callback.result == null) {
+				try {
+					callback.wait();
+				} catch(Exception e) {
+				}
 			}
 		}
-		monitor.unlock();
-		return t;
+		return callback.result;
 	}
 
 	@Override
 	public Tuple read(Tuple template) {
-		monitor.lock();
-		Tuple result = null;
-		int index = findNext(0, template);
-		if (index == -1) {
-			try {
-				Condition condition = registerRequest(template);
-				condition.await();
-				condition.signal();//signal other threads
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		callback = new BlockingCallback();
+		eventRegister(Linda.eventMode.READ, Linda.eventTiming.IMMEDIATE,
+				template, callback);
+		synchronized (int key) {
+			while (callback.result == null) {
+				try {
+					callback.wait();
+				} catch(Exception e) {
+				}
 			}
-		} else {
-			result = tupleSpace.get(index);
 		}
-		monitor.unlock();
-		return result;
+		return callback.result;
 	}
 
 	@Override
 	public Tuple tryTake(Tuple template) {
-		monitor.lock();
-		int i = findNext(0, template);
-        Tuple t;
-		if (i != -1) {
-			t = tupleSpace.remove(i);
-		} else {
-			t = null;
+		Tuple t = null;
+		synchronized (this) {
+			for (Tuple t2 : tupleSpace) {
+				if (t2.matches(template)) {
+					t = t2;
+					tupleSpace.remove(t2);
+					break;
+				}
+			}
 		}
-		monitor.unlock();
 		return t;
 	}
 
 	@Override
 	public Tuple tryRead(Tuple template) {
-		monitor.lock();
-        int i = findNext(0, template);
-        Tuple t;
-		if (i != -1) {
-			t = tupleSpace.get(i);
-		} else {
-			t = null;
+		Tuple t = null;
+		synchronized (this) {
+			for (Tuple t2 : tupleSpace) {
+				if (t2.matches(template)) {
+					t = t2;
+					break;
+				}
+			}
 		}
-		monitor.unlock();
-		return t;
+		return t;	
 	}
 
 	@Override
 	public List<Tuple> takeAll(Tuple template) {
-		monitor.lock();
 		List<Tuple> listMatches = new ArrayList<Tuple>();
-		
-		int i = 0;
-		while (i < tupleSpace.size()) {
-			i = findNext(i, template); // i is the index of template's next occurence
-			// If there is no more matching tuples in the tuplespace,
-			// quit the loop
-			if (i == -1) {
-				break;
+		Tuple t;
+		do {
+			t = tryTake(template);
+			if (t != null) {
+				listMatches.add(t);
 			}
-			// Else, pop the matching tuple and add it to the list
-			else {
-				listMatches.add(tupleSpace.remove(i));
-			}
-		}
-		monitor.unlock();
+		} while (t != null);
 
 		return listMatches;
 	}
 
 	@Override
-	public Collection<Tuple> readAll(Tuple template) {
-		monitor.lock();
+	public List<Tuple> readAll(Tuple template) {
 		List<Tuple> listMatches = new ArrayList<Tuple>();
-		
-		int i = 0;
-		while (i < tupleSpace.size()) {
-			i = findNext(i, template); // i is the index of template's next occurence
-			// If there is no more matching tuples in the tuplespace,
-			// quit the loop
-			if (i == -1) {
-				break;
+		Tuple t;
+		do {
+			t = tryRead(template);
+			if (t != null) {
+				listMatches.add(t);
 			}
-			// Else, get the matching tuple
-			else {
-				listMatches.add(tupleSpace.get(i));
-			}
-			i++;
-		}
-		monitor.unlock();
+		} while (t != null);
 
 		return listMatches;
 	}
 
 	@Override
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {	
-		Tuple t;
-		if (timing == eventTiming.IMMEDIATE) {
-			// TODO: should wait for a matching template to be in the TS to be
-			// triggered
-			if (mode == eventMode.TAKE) {
-				t = tryTake(template);
-			} else {
-				// mode == READ
-				t = tryRead(template);
-			}
-			callback.call(t);
-
-		} else {
-			// TODO: should not be triggered at once
-			// timing = FUTURE
-			if (mode == eventMode.TAKE) {
-				t = take(template);
-			} else {
-				// mode = READ
-				t = read(template);
-			}
-			callback.call(t);
-		}
-	}
-
-	/**
-	 * returns the index of the next tuple that matches the template in the tuplespace.
-	 * @param startIndex: the index wher to start search (inclusive)
-	 * @param template: the template to match
-	 * @return the index of the next tuple, or -1 if the search reach the end
-	 */
-	private int findNext(int startIndex, Tuple template){
-		int i=startIndex;
-		int result;
-		boolean notfound = true;
-		while (notfound && ( i < this.tupleSpace.size())){
-			if (tupleSpace.get(i).matches(template)){
-				notfound = false;
-			}
-			i++;
-		}
-		if (notfound) {
-			result = -1;
-		} else {
-			result = i-1;
-		}
-
-		return result;
-	}
-
-	/**
-	 * register a tuple request inside the Condition collection
-	 * @param template the template we tried to match
-     */
-	private Condition registerRequest(Tuple template){
-		return tupleAviable.getOrDefault(template, monitor.newCondition());
-	}
-
-	/**
-	 * pop a tuple request from the Condition collection
-	 * NOTE: the algorithm makes no differences between read/take
-	 * @param tuple the newly available tuple
-	 * @return the condition associated to the tuple request or null if it don't exist
-     */
-	private Condition popRequest(Tuple tuple){
-		for ( Tuple key : tupleAviable.keySet()){
-			if (tuple.matches(key)){
-				Condition condition = tupleAviable.get(key);
-				// if nobody is waiting for the condition
-				if (!monitor.hasWaiters(condition)) {
-					tupleAviable.remove(key);
+		Tuple t=null;
+		synchronized (this) {
+			if (timing == eventTiming.IMMEDIATE) {
+				if (mode == eventMode.TAKE) {
+					t = tryTake(template);
+				} else {
+					// mode == READ
+					t = tryRead(template);
 				}
-				return condition;
+				if (t == null) {
+					if (mode == eventMode.TAKE) {
+						pendingTakes.put(template, callback);
+					} else {
+						pendingReads.put(template, callback);
+					}
+				} else {
+					callback.call(t); // Retirer du synchronized ?
+				}
+			} else {
+				// timing = FUTURE
+				if (mode == eventMode.TAKE) {
+					pendingTakes.put(template, callback);
+				} else {
+					// mode = READ
+					pendingReads.put(template, callback);
+				}
+
 			}
 		}
-		return null;
 	}
+
+
 
 	@Override
     public void debug(String prefix) {
@@ -240,4 +184,17 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
+	private class BlockingCallback implements Callback {
+		
+		Tuple result;
+		
+		private BlockingCallback() {}
+
+		public void call(Tuple t) {
+			synchronized (this) {
+				result = t;
+				notify(); 
+			}
+		}
+	}
 }
