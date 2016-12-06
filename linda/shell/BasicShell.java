@@ -12,9 +12,9 @@ import linda.Tuple;
 public class BasicShell {
 	public static void main(String[] args){
 		//Repertoir des scripts
-		String pathToScripts = "src/linda/script/";
+		String pathToScripts = "linda/script/";
 		//Instanciation d'un Linda
-		final Linda linda = new linda.tshm.CentralizedLinda();
+		final Linda linda = new linda.shm.CentralizedLinda();
 
 		//Instanciation du scanner et du token pour parser les entrée de l'utilisateur
 		Scanner sc = new Scanner(System.in);
@@ -261,6 +261,7 @@ public class BasicShell {
 
 			}else if (token.equals("exit")) {
 				System.out.println("Stopping Linda");
+				break;
 			} else {
 				System.out.println("Wrong command");
 				System.out.println("Existing commands are : ");

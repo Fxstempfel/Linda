@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Arrays;
 
 import linda.Linda;
 import linda.Tuple;
@@ -73,11 +74,16 @@ public class BasicLindaScriptReader {
 				if(!t.isEmpty()) {
 					hm.put(name, t);
 				}
-			}
-			else if (currentLine[0].equals("print")) {
-				if ( hm.containsKey(currentLine[1])); {
+			} else if (currentLine[0].equals("print")) {
+				if ( hm.containsKey(currentLine[1])) {
 					System.out.println(currentLine[1] + " = " + hm.get(currentLine[1]));
+				} else {
+					printThisLine(myLine);
 				}
+			} else if (currentLine[0].equals("//")) { // comment
+				continue;
+			} else if (myLine.equals("")) { // empty line 
+				continue;
 			} else {
 				System.out.println("ERROR IN FILE : " + this.filename);
 				System.out.println(" Line : " +  this.myLine);
@@ -85,6 +91,13 @@ public class BasicLindaScriptReader {
 			}
 
 		}
+	}
+
+	private void printThisLine(String l) {
+		String[] splitLine = myLine.split(" ");
+		splitLine = Arrays.copyOfRange(splitLine, 1, splitLine.length);
+		String line = String.join(" ", splitLine);
+		System.out.println(line);
 	}
 
 }
