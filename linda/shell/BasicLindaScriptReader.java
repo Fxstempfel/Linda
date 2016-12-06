@@ -75,7 +75,10 @@ public class BasicLindaScriptReader {
 					hm.put(name, t);
 				}
 			} else if (currentLine[0].equals("print")) {
-				if ( hm.containsKey(currentLine[1])) {
+				if (currentLine.length == 1) {
+					System.out.println();
+				}
+				else if ( hm.containsKey(currentLine[1])) {
 					System.out.println(currentLine[1] + " = " + hm.get(currentLine[1]));
 				} else {
 					printThisLine(myLine);
