@@ -45,7 +45,7 @@ public class CentralizedLinda implements Linda {
 		BlockingCallback callback = new BlockingCallback();
 		eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
 				template, callback);
-		synchronized (this) {
+		synchronized (callback) {
 			while (callback.result == null) {
 				try {
 					callback.wait();
