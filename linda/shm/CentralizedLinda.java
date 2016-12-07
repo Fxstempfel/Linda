@@ -113,14 +113,13 @@ public class CentralizedLinda implements Linda {
 
 	public List<Tuple> readAll(Tuple template) {
 		List<Tuple> listMatches = new ArrayList<Tuple>();
-		Tuple t;
-		do {
-			t = tryRead(template);
-			if (t != null) {
-				listMatches.add(t);
+		synchronized (this) {
+			for (Tuple t2 : tupleSpace) {
+				if (t2.matches(template)) {
+					listMatches.add(t2);
+				}
 			}
-		} while (t != null);
-
+		}
 		return listMatches;
 	}
 
