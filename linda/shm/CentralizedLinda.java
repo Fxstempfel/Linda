@@ -65,12 +65,10 @@ public class CentralizedLinda implements Linda {
 		eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
 				template, callback);
 		synchronized (callback) {
-			//while (callback.result == null) {
-				try {
-					callback.wait();
-				} catch(Exception e) {
-				}
-			//}
+			try {
+				callback.wait();
+			} catch(Exception e) {
+			}
 			nbPendingTakes--;
 			return callback.result;
 		}
@@ -82,13 +80,11 @@ public class CentralizedLinda implements Linda {
 		eventRegister(Linda.eventMode.READ, Linda.eventTiming.IMMEDIATE,
 				template, callback);
 		synchronized (callback) {
-			//while (callback.result == null) {
-				try {
-					callback.wait();
-				} catch(Exception e) {
-				}
-			//}
-			nbPendingTakes--;
+			try {
+				callback.wait();
+			} catch(Exception e) {
+			}
+			nbPendingReads--;
 			return callback.result;
 		}
 	}
@@ -208,14 +204,21 @@ public class CentralizedLinda implements Linda {
 		//Print pendingReads
 		System.out.println(prefix + " PendingReads : ");
 		for (Tuple t : pendingReads.keySet()) {
-			System.out.println(t);
+			System.out.println(t + " (" + pendingReads.get(t).size() +")");
 		}
 
-		//Print pendinTakesg
+		//Print pendingTakes
 		System.out.println(prefix + " PendingTakes : ");
 		for (Tuple t : pendingTakes.keySet()) {
-			System.out.println(t);
+			System.out.println(t + " (" + pendingTakes.get(t).size() +")");
 		}
+
+		System.out.println(prefix + " TupleSpace's size : " + getSizeTupleSpace());
+		System.out.println(prefix + " Nb of active processes : " +
+			getNbActiveProcesses());
+		System.out.println(prefix + " \t including : " + nbPendingReads + 
+			" reads");
+		System.out.println(prefix + " \t and : " + nbPendingTakes + " takes");
 	}
 
 	public int getSizeTupleSpace() {
@@ -223,7 +226,15 @@ public class CentralizedLinda implements Linda {
 	}
 
 	public int getNbActiveProcesses() {
-		
+		return nbPendingReads + nbPendingTakes;
+	}
+
+	public int getNbPendingReads() {
+		return nbPendingReads;
+	}
+
+	public int getNbPendingTakes() {
+		return nbPendingTakes;
 	}
 
 	private class BlockingCallback implements Callback {
