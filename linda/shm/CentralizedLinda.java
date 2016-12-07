@@ -10,34 +10,26 @@ import java.util.logging.Logger;
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
 
-	/** TODO: ajouter le reveil en chaine, et ajouter le reveil lors de l'ecriture */
 	private List<Tuple> tupleSpace;
 	private Map<Tuple, Callback> pendingReads;
 	private Map<Tuple, Callback> pendingTakes;
-	/** map of the requests:
-	 * Tuple type corresponds to the template requested,
-	 * Condition are used to wake the threads that made this request
-	 */
-	//private Map<Tuple, Condition>tupleAviable;
 
     public CentralizedLinda() {
 		tupleSpace = new ArrayList<Tuple>();
-		//tupleAviable = new HashMap<Tuple, Condition>();
 		pendingTakes = new HashMap<Tuple, Callback>();
 		pendingReads = new HashMap<Tuple, Callback>();
     }
 
-    @Override
 	public void write(Tuple t) {
 		boolean matchingTake = false;
-		synchronized (int key) {
+		synchronized (this) {
 			for (Tuple template : pendingReads.keySet()) {
-				if (template.matches(t)) {
+				if (t.matches(template)) {
 					pendingReads.remove(template).call(t.deepclone());
 				}
 			}
-			for (Tuple template : pendingTries.keySet()) {
-				if (template.matches(t)) {
+			for (Tuple template : pendingTakes.keySet()) {
+				if (t.matches(template)) {
 					pendingTakes.remove(template).call(t.deepclone());
 					matchingTake = true;
 					break;
@@ -49,41 +41,36 @@ public class CentralizedLinda implements Linda {
 		}
 	}
 
-	// First version : it is assumed that the template matches a tuple in the tupleSpace
-	// Need to block if there is no matching tuple
-	@Override
 	public Tuple take(Tuple template) {
-		callback = new BlockingCallback();
+		BlockingCallback callback = new BlockingCallback();
 		eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
 				template, callback);
-		synchronized (int key) {
+		synchronized (this) {
 			while (callback.result == null) {
 				try {
 					callback.wait();
 				} catch(Exception e) {
 				}
 			}
+			return callback.result;
 		}
-		return callback.result;
 	}
 
-	@Override
 	public Tuple read(Tuple template) {
-		callback = new BlockingCallback();
+		BlockingCallback callback = new BlockingCallback();
 		eventRegister(Linda.eventMode.READ, Linda.eventTiming.IMMEDIATE,
 				template, callback);
-		synchronized (int key) {
+		synchronized (callback) {
 			while (callback.result == null) {
 				try {
 					callback.wait();
 				} catch(Exception e) {
 				}
 			}
+			return callback.result;
 		}
-		return callback.result;
 	}
 
-	@Override
 	public Tuple tryTake(Tuple template) {
 		Tuple t = null;
 		synchronized (this) {
@@ -98,7 +85,6 @@ public class CentralizedLinda implements Linda {
 		return t;
 	}
 
-	@Override
 	public Tuple tryRead(Tuple template) {
 		Tuple t = null;
 		synchronized (this) {
@@ -112,7 +98,6 @@ public class CentralizedLinda implements Linda {
 		return t;	
 	}
 
-	@Override
 	public List<Tuple> takeAll(Tuple template) {
 		List<Tuple> listMatches = new ArrayList<Tuple>();
 		Tuple t;
@@ -126,7 +111,6 @@ public class CentralizedLinda implements Linda {
 		return listMatches;
 	}
 
-	@Override
 	public List<Tuple> readAll(Tuple template) {
 		List<Tuple> listMatches = new ArrayList<Tuple>();
 		Tuple t;
@@ -140,7 +124,6 @@ public class CentralizedLinda implements Linda {
 		return listMatches;
 	}
 
-	@Override
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {	
 		Tuple t=null;
 		synchronized (this) {
@@ -175,11 +158,22 @@ public class CentralizedLinda implements Linda {
 
 
 
-	@Override
     public void debug(String prefix) {
 		// Print the tuples in the tupleSpace
 		System.out.println(prefix + " TupleSpace : ");
 		for (Tuple t : tupleSpace) {
+			System.out.println(t);
+		}
+
+		//Print pendingReads
+		System.out.println(prefix + " PendingReads : ");
+		for (Tuple t : pendingReads.keySet()) {
+			System.out.println(t);
+		}
+
+		//Print pendinTakesg
+		System.out.println(prefix + " PendingTakes : ");
+		for (Tuple t : pendingTakes.keySet()) {
 			System.out.println(t);
 		}
 	}
