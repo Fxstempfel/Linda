@@ -80,9 +80,11 @@ public class CentralizedLinda implements Linda {
 		eventRegister(Linda.eventMode.READ, Linda.eventTiming.IMMEDIATE,
 				template, callback);
 		synchronized (callback) {
-			try {
-				callback.wait();
-			} catch(Exception e) {
+			if (callback.result==null) {
+				try {
+					callback.wait();
+				} catch (Exception e) {
+				}
 			}
 			nbPendingReads--;
 			return callback.result;
