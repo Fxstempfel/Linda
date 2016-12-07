@@ -25,7 +25,7 @@ public class TestWrite {
               
         new Thread() {
             public void run() {
-                System.out.println("(2) write: " + t1);
+                System.out.println("(1) write: " + t1);
                 linda.write(t1);
             }
         }.start();
@@ -39,14 +39,14 @@ public class TestWrite {
         
         new Thread() {
             public void run() {
-                System.out.println("(2) write: " + t2);
+                System.out.println("(3) write: " + t2);
                 linda.write(t2);
             }
         }.start();
         
         new Thread() {
             public void run() {
-                System.out.println("(2) write: " + t3);
+                System.out.println("(4) write: " + t3);
                 linda.write(t3);
             }
         }.start();
