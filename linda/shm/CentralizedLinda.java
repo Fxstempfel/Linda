@@ -14,11 +14,15 @@ public class CentralizedLinda implements Linda {
 	// we use the queue interface to handle multiple callbacks over one key
 	private Map<Tuple, Queue<Callback>> pendingReads;
 	private Map<Tuple, Queue<Callback>> pendingTakes;
+	private int nbPendingReads;
+	private int nbPendingTakes;
 
     public CentralizedLinda() {
 		tupleSpace = new ArrayList<Tuple>();
 		pendingTakes = new HashMap<Tuple, Queue<Callback>>();
 		pendingReads = new HashMap<Tuple, Queue<Callback>>();
+		nbPendingReads = 0;
+		nbPendingTakes = 0;
     }
 
 	public void write(Tuple t) {
@@ -57,6 +61,7 @@ public class CentralizedLinda implements Linda {
 
 	public Tuple take(Tuple template) {
 		BlockingCallback callback = new BlockingCallback();
+		nbPendingTakes++;
 		eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
 				template, callback);
 		synchronized (callback) {
@@ -66,12 +71,14 @@ public class CentralizedLinda implements Linda {
 				} catch(Exception e) {
 				}
 			//}
+			nbPendingTakes--;
 			return callback.result;
 		}
 	}
 
 	public Tuple read(Tuple template) {
 		BlockingCallback callback = new BlockingCallback();
+		nbPendingReads++;
 		eventRegister(Linda.eventMode.READ, Linda.eventTiming.IMMEDIATE,
 				template, callback);
 		synchronized (callback) {
@@ -81,6 +88,7 @@ public class CentralizedLinda implements Linda {
 				} catch(Exception e) {
 				}
 			//}
+			nbPendingTakes--;
 			return callback.result;
 		}
 	}
@@ -208,6 +216,14 @@ public class CentralizedLinda implements Linda {
 		for (Tuple t : pendingTakes.keySet()) {
 			System.out.println(t);
 		}
+	}
+
+	public int getSizeTupleSpace() {
+		return tupleSpace.size();
+	}
+
+	public int getNbActiveProcesses() {
+		
 	}
 
 	private class BlockingCallback implements Callback {
