@@ -10,7 +10,7 @@ import org.junit.Test;
 
 public class TestTakeAll {
 
-	final static Linda linda = new linda.tshm.CentralizedLinda();
+	final static Linda linda = new linda.shm.CentralizedLinda();
     static Tuple t1 = new Tuple(4, 5);
     static Tuple t11 = new Tuple(4, 5);
     static Tuple t2 = new Tuple("hello", 15);
