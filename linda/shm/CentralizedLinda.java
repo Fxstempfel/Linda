@@ -65,9 +65,11 @@ public class CentralizedLinda implements Linda {
 		eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
 				template, callback);
 		synchronized (callback) {
-			try {
-				callback.wait();
-			} catch(Exception e) {
+			if (callback.result==null) {
+				try {
+					callback.wait();
+				} catch(Exception e) {
+				}
 			}
 			nbPendingTakes--;
 			return callback.result;
@@ -198,29 +200,31 @@ public class CentralizedLinda implements Linda {
 
     public void debug(String prefix) {
 		// Print the tuples in the tupleSpace
-		System.out.println(prefix + " TupleSpace : ");
-		for (Tuple t : tupleSpace) {
-			System.out.println(t);
-		}
+		synchronized(this) {
+			System.out.println(prefix + " TupleSpace : ");
+			for (Tuple t : tupleSpace) {
+				System.out.println(t);
+			}
 
-		//Print pendingReads
-		System.out.println(prefix + " PendingReads : ");
-		for (Tuple t : pendingReads.keySet()) {
-			System.out.println(t + " (" + pendingReads.get(t).size() +")");
-		}
+			//Print pendingReads
+			System.out.println(prefix + " PendingReads : ");
+			for (Tuple t : pendingReads.keySet()) {
+				System.out.println(t + " (" + pendingReads.get(t).size() +")");
+			}
 
-		//Print pendingTakes
-		System.out.println(prefix + " PendingTakes : ");
-		for (Tuple t : pendingTakes.keySet()) {
-			System.out.println(t + " (" + pendingTakes.get(t).size() +")");
-		}
+			//Print pendingTakes
+			System.out.println(prefix + " PendingTakes : ");
+			for (Tuple t : pendingTakes.keySet()) {
+				System.out.println(t + " (" + pendingTakes.get(t).size() +")");
+			}
 
-		System.out.println(prefix + " TupleSpace's size : " + getSizeTupleSpace());
-		System.out.println(prefix + " Nb of active processes : " +
-			getNbActiveProcesses());
-		System.out.println(prefix + " \t including : " + nbPendingReads + 
-			" reads");
-		System.out.println(prefix + " \t and : " + nbPendingTakes + " takes");
+			System.out.println(prefix + " TupleSpace's size : " + getSizeTupleSpace());
+			System.out.println(prefix + " Nb of active processes : " +
+					getNbActiveProcesses());
+			System.out.println(prefix + " \t including : " + nbPendingReads + 
+					" reads");
+			System.out.println(prefix + " \t and : " + nbPendingTakes + " takes");
+		}
 	}
 
 	public int getSizeTupleSpace() {

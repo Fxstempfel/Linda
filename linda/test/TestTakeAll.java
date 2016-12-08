@@ -1,10 +1,12 @@
-package linda;
+package linda.test;
 
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import linda.Tuple;
+import linda.Linda;
 
 import org.junit.Test;
 
