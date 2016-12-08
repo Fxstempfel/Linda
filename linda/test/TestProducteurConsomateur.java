@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import linda.Linda;
 
 public class TestProducteurConsomateur {
-	final Linda linda = new linda.tshm.CentralizedLinda();
+	final Linda linda = new linda.shm.CentralizedLinda();
 	private int nb_conso;
 	private int nb_produc;
 	

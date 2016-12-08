@@ -7,7 +7,7 @@ import linda.Tuple;
 
 public class TestPhilosophes {
 
-	final Linda linda = new linda.tshm.CentralizedLinda();
+	final Linda linda = new linda.shm.CentralizedLinda();
 	private int nb_philo;
 
 	public TestPhilosophes(int nb_philo) {

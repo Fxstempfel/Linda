@@ -1,12 +1,14 @@
-package linda;
+package linda.test;
 
 import static org.junit.Assert.*;
+import linda.Linda;
+import linda.Tuple;
+import linda.Callback;
 
 import org.junit.Test;
 
 import linda.Linda.eventMode;
 import linda.Linda.eventTiming;
-import linda.TestEventImmediate.MyCallback;
 
 public class TestEventFutur {
 
@@ -18,7 +20,7 @@ public class TestEventFutur {
 	int d;
     
 
-    static Linda linda = new linda.tshm.CentralizedLinda();
+    static Linda linda = new linda.shm.CentralizedLinda();
 
 	private  class MyCallback implements Callback {
 		int a = 0;
