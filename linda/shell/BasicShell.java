@@ -12,7 +12,7 @@ import linda.Tuple;
 public class BasicShell {
 	public static void main(String[] args){
 		//Repertoir des scripts
-		String pathToScripts = "linda/script/";
+		final String pathToScripts = "linda/script/";
 		//Instanciation d'un Linda
 		final Linda linda = new linda.shm.CentralizedLinda();
 
