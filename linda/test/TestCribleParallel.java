@@ -1,14 +1,15 @@
 package linda.test;
 
+import java.time.Clock;
 import java.util.ArrayList;
 
 import linda.Linda;
 import linda.Tuple;
 
 public class TestCribleParallel {
-	final Linda linda = new linda.tshm.CentralizedLinda();
+	final Linda linda = new linda.shm.CentralizedLinda();
 	private int k;
-	private int nb_max_threads = 4;
+	private int nb_max_threads = 3;
 	
 	public TestCribleParallel(int k ) {
 		this.k=k;
@@ -28,7 +29,7 @@ public class TestCribleParallel {
 		}
 		
 		for(int nth=0;nth<nb_max_threads;nth++){
-			listThreads.get(nth).run();
+			listThreads.get(nth).start();
 		}
 		for(int nth=0;nth<nb_max_threads;nth++){
 			try {
@@ -42,6 +43,7 @@ public class TestCribleParallel {
 	}
 
 	public void doCrible() {
+		long timer_start = System.currentTimeMillis();
 		this.setup();
 		for(int i=0;i<=this.k;i++){
 			if(linda.tryRead(new Tuple(i)) != null) {
@@ -49,7 +51,7 @@ public class TestCribleParallel {
 				this.takeMultiple(i);
 			}
 		}
-
+		System.out.println("Le crible parallel a pris : " + (System.currentTimeMillis()-timer_start) + "ms");
 		linda.debug("Crible Parallel");
 	}
 }

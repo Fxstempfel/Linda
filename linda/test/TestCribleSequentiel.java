@@ -5,7 +5,7 @@ import linda.Tuple;
 
 public class TestCribleSequentiel {
 	
-	final Linda linda = new linda.tshm.CentralizedLinda();
+	final Linda linda = new linda.shm.CentralizedLinda();
 	private int k;
 	public TestCribleSequentiel(int k ) {
 		this.k=k;
@@ -28,6 +28,7 @@ public class TestCribleSequentiel {
 	}
 	
 	public void doCrible() {
+		long timer_start = System.currentTimeMillis();
 		this.setup();
 		for(int i=0;i<=this.k;i++){
 			if(linda.tryRead(new Tuple(i)) != null) {
@@ -35,7 +36,7 @@ public class TestCribleSequentiel {
 				this.takeMultiple(i);
 			}
 		}
-		
+		System.out.println("Le crible sequentiel a pris : " + (System.currentTimeMillis()-timer_start) + "ms");
 		linda.debug("Crible Sequentiel");
 	}
 	
