@@ -3,10 +3,14 @@ package linda.test;
 public class LancerCrible {
 
 	public static void main(String[] args) {
-		TestCribleSequentiel test = new TestCribleSequentiel(100);
-		TestCribleParallel test2 = new TestCribleParallel(100);
+		
+		//TestCribleParallel test2 = new TestCribleParallel(50000);
+		//test2.doCrible();
+		TestCribleSequentiel test = new TestCribleSequentiel(50000);
 		test.doCrible();
-		test2.doCrible();
+		
+		
+		
 		
 	}
 }
