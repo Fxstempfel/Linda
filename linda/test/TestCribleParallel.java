@@ -6,7 +6,7 @@ import linda.Linda;
 import linda.Tuple;
 
 public class TestCribleParallel {
-	final Linda linda = new linda.tshm.CentralizedLinda();
+	final Linda linda = new linda.shm.CentralizedLinda();
 	private int k;
 	private int nb_max_threads = 4;
 	

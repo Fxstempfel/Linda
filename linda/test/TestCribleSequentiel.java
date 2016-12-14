@@ -5,7 +5,7 @@ import linda.Tuple;
 
 public class TestCribleSequentiel {
 	
-	final Linda linda = new linda.tshm.CentralizedLinda();
+	final Linda linda = new linda.shm.CentralizedLinda();
 	private int k;
 	public TestCribleSequentiel(int k ) {
 		this.k=k;

@@ -5,7 +5,7 @@ import linda.Tuple;
 
 public class LindaSemaphore {
 	
-	Linda linda = new linda.tshm.CentralizedLinda();
+	Linda linda = new linda.shm.CentralizedLinda();
 	Tuple t = new Tuple("Token");
 	
 	public LindaSemaphore(int nb) {
