@@ -3,9 +3,10 @@ package linda.shell;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 import linda.Linda;
 import linda.Tuple;
@@ -25,6 +26,7 @@ public class BasicLindaScriptReader {
 	String[] currentLine;
 	Linda linda;
 	HashMap<String, Tuple> hm = new HashMap<String,Tuple>();
+	HashMap<String, Collection<Tuple>> hml = new HashMap<String,Collection<Tuple>>();
 
 	public BasicLindaScriptReader(String filename, Linda linda) throws FileNotFoundException {
 		this.input = new FileReader(filename);
@@ -74,33 +76,49 @@ public class BasicLindaScriptReader {
 				if(t == null || !t.isEmpty()) {
 					hm.put(name, t);
 				}
+			}
+			else if (currentLine[0].equals("readAll")) {
+				String name = currentLine[1];
+				Collection<Tuple> tl = linda.readAll(hm.get(currentLine[2]));
+				hml.put(name,tl);
+			} else if (currentLine[0].equals("takeAll")) {
+				String name = currentLine[1];
+				Collection<Tuple> tl = linda.takeAll(hm.get(currentLine[2]));
+				hml.put(name,tl);
 			} else if (currentLine[0].equals("print")) {
 				if (currentLine.length == 1) {
 					System.out.println();
 				}
 				else if ( hm.containsKey(currentLine[1])) {
 					System.out.println(currentLine[1] + " = " + hm.get(currentLine[1]));
-				} else {
+				} 
+				else if (hml.containsKey(currentLine[1])) {
+					System.out.println(currentLine[1] + " = " + hml.get(currentLine[1]));
+				}
+				else {
 					printThisLine(myLine);
 				}
-			} else if (currentLine[0].equals("//")) { // comment
-				continue;
-			} else if (myLine.equals("")) { // empty line 
-				continue;
-			} else {
-				System.out.println("ERROR IN FILE : " + this.filename);
-				System.out.println(" Line : " +  this.myLine);
-				System.exit(1);
 			}
+				else if (currentLine[0].equals("//")) { // comment
+					continue;
+				} 
+				else if (myLine.equals("")) { // empty line 
+					continue;
+				} 
+				else {
+					System.out.println("ERROR IN FILE : " + this.filename);
+					System.out.println(" Line : " +  this.myLine);
+					System.exit(1);
+				}
 
+			}
 		}
-	}
 
-	private void printThisLine(String l) {
-		String[] splitLine = myLine.split(" ");
-		splitLine = Arrays.copyOfRange(splitLine, 1, splitLine.length);
-		String line = String.join(" ", splitLine);
-		System.out.println(line);
-	}
+		private void printThisLine(String l) {
+			String[] splitLine = myLine.split(" ");
+			splitLine = Arrays.copyOfRange(splitLine, 1, splitLine.length);
+			String line = String.join(" ", splitLine);
+			System.out.println(line);
+		}
 
-}
+	}
