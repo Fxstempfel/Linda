@@ -62,10 +62,13 @@ public class CentralizedLinda implements Linda {
 	public Tuple take(Tuple template) {
 		BlockingCallback callback = new BlockingCallback();
 		nbPendingTakes++;
+		// Call the eventRegister method, the callback will notify when a
+		// matching tuple is found
 		eventRegister(Linda.eventMode.TAKE, Linda.eventTiming.IMMEDIATE,
 				template, callback);
+		// Lock and wait until the call method of the callback notifies
 		synchronized (callback) {
-			if (callback.result==null) {
+			while (callback.result==null) {
 				try {
 					callback.wait();
 				} catch(Exception e) {
@@ -79,10 +82,13 @@ public class CentralizedLinda implements Linda {
 	public Tuple read(Tuple template) {
 		BlockingCallback callback = new BlockingCallback();
 		nbPendingReads++;
+		// Call the eventRegister method, the callback will notify when a
+		// matching tuple is found
 		eventRegister(Linda.eventMode.READ, Linda.eventTiming.IMMEDIATE,
 				template, callback);
+		// Lock and wait until the call method of the callback notifies
 		synchronized (callback) {
-			if (callback.result==null) {
+			while (callback.result==null) {
 				try {
 					callback.wait();
 				} catch (Exception e) {
@@ -95,6 +101,7 @@ public class CentralizedLinda implements Linda {
 
 	public Tuple tryTake(Tuple template) {
 		Tuple t = null;
+		// Lock to access the shared variables 
 		synchronized (this) {
 			for (Tuple t2 : tupleSpace) {
 				if (t2.matches(template)) {
@@ -109,6 +116,7 @@ public class CentralizedLinda implements Linda {
 
 	public Tuple tryRead(Tuple template) {
 		Tuple t = null;
+		// Lock to access the shared variables 
 		synchronized (this) {
 			for (Tuple t2 : tupleSpace) {
 				if (t2.matches(template)) {
@@ -123,6 +131,7 @@ public class CentralizedLinda implements Linda {
 	public List<Tuple> takeAll(Tuple template) {
 		List<Tuple> listMatches = new ArrayList<Tuple>();
 		Tuple t;
+		// Call tryTake while matching tuples are found in the tupleSpace
 		do {
 			t = tryTake(template);
 			if (t != null) {
@@ -135,6 +144,8 @@ public class CentralizedLinda implements Linda {
 
 	public List<Tuple> readAll(Tuple template) {
 		List<Tuple> listMatches = new ArrayList<Tuple>();
+		// Different than takeAll to prevent infinite loops : need to consider
+		// each element of the tupleSpace only once. We therefore cannot use tryRead
 		synchronized (this) {
 			for (Tuple t2 : tupleSpace) {
 				if (t2.matches(template)) {
@@ -249,6 +260,8 @@ public class CentralizedLinda implements Linda {
 		
 		private BlockingCallback() {}
 
+		// This method is called when a matching tuple is found. It notifies to
+		// wake up the method read or take which instantiated this callback
 		public void call(Tuple t) {
 			synchronized (this) {
 				result = t;

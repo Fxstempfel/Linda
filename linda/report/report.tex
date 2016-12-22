@@ -6,7 +6,7 @@
 \usepackage{graphicx}
 \usepackage{wrapfig}
 \usepackage{titlesec} 
-\usepackage[top=1cm, bottom=3cm, left=3.2cm, right=3.2cm]{geometry}
+\usepackage[top=3.2cm, bottom=3.2cm, left=3.2cm, right=3.2cm]{geometry}
 \usepackage{amsmath} %maths
 \usepackage{amsfonts} %maths
 \usepackage{fancyhdr} %footer
@@ -19,9 +19,9 @@
 \usepackage{xcolor}
 \usepackage{xstring}
 
-\title{\bl{\hrule}\vspace{1em}\Huge\textbf{Projet Systèmes Concurrents \\Rapport Étape 1}\\[-0.7em]\bl{\hrule}}
-\author{\Large\textsc{\bl{B}oissin} \bl{T}hibaut \and \textsc{\bl{S}tempfel} \bl{F}rançois-Xavier}
-\date{}
+\title{\bl{\hrule}\vspace{1em}\Huge\textbf{Projet Systèmes Concurrents \\Rapport Final Étape 1}\\[-0.7em]\bl{\hrule}}
+\author{\Large\textsc{\bl{B}oissin} \bl{T}hibaut \and \Large\textsc{\bl{S}tempfel} \bl{F}rançois-Xavier}
+\date{3 janvier 2016}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,10 +46,10 @@
 
 % Change of numerotation & indent
 \renewcommand{\thesection}{\Roman{section}}
-\renewcommand{\thesubsection}{\hspace*{0.4 cm}\arabic{subsection}}
+\renewcommand{\thesubsection}{\bl{$\bullet$}}
 
 \titleformat{\section}[block]{\bfseries\Large}{\thesection.}{.5em}{}[\vspace{-0.7em}\bl{\titlerule}]
-\titleformat{\subsection}[block]{\bfseries\large}{\thesubsection.}{10 pt}{}
+\titleformat{\subsection}[block]{\bfseries\large}{\thesubsection}{10 pt}{}[\vspace{-0.7em}\bl{\titlerule}]
 \titleformat{\subsubsection}[block]{\bfseries\large}{\thesubsubsection.}{8 pt}{}
 \titlespacing{\subsection}{12 pt}{*4}{*3}
 \titlespacing{\subsubsection}{25 pt}{*3}{*1.5}
@@ -107,24 +107,24 @@
 
 \sffamily
 
-\pagenumbering{gobble}
-
 \maketitle
 
 
-%\vspace{2em}
+\vspace{2em}
 
 \section*{Structures de données et stratégies utilisées}
 
-Pour gérer le caractère bloquant des méthodes \texttt{read} et \texttt{take}, nous avons choisi d'utiliser deux \texttt{Map}, contenant respectivement les \texttt{read} et les \texttt{take} en attente. Les clés sont les tuples correspondant au motif recherché et les valeurs sont des \texttt{Queue} (implémentées par des \texttt{LinkedList}) qui contiennent les \textit{callback} associés aux requêtes.
-
-L'espace de tuples est lui représenté par une \texttt{List}.
-
-La gestion de la concurrence se fait grâce à des verrous, par le biais de blocs \texttt{synchronized} et éventuellement des méthodes \texttt{wait} et \texttt{notify}.
-
+	Pour gérer le caractère bloquant des méthodes \texttt{read} et \texttt{take}, nous avons choisi d'utiliser deux \texttt{Map}, contenant respectivement les \texttt{read} et les \texttt{take} en attente. Les clés sont les tuples correspondant au motif recherché et les valeurs sont des \texttt{Queue} (implémentées par des \texttt{LinkedList}) qui contiennent les \textit{callback} associés aux requêtes.
+	
+	L'espace de tuples est lui représenté par une \texttt{List}.
+	
+	La gestion de la concurrence se fait grâce à des verrous, par le biais de blocs \texttt{synchronized} et éventuellement des méthodes \texttt{wait} et \texttt{notify}.
+	
+	À noter que nous avons opté pour 	une solution qui permet de factoriser le code : dans les méthodes \texttt{read} et \texttt{take}, nous utilisons la méthode \texttt{eventRegister} avec les bons paramètres.
+	
 \section*{Description des méthodes sensibles}
 
-	\subsection*{write}
+	\subsection{write}
 		Au sein du bloc verrouillé, on cherche d'abord si des \texttt{read}, puis des \texttt{take}, sont en attente d'un tuple correspondant à celui concerné. Si c'est le cas :
 		\begin{itemize}
 			\item pour les \texttt{read}, on appelle tous les \textit{callbacks} correspondants,
@@ -132,15 +132,23 @@ La gestion de la concurrence se fait grâce à des verrous, par le biais de bloc
 		\end{itemize}
 		Si l'on a pas trouvé de \texttt{take} correspondant, on ajoute le tuple à l'espace de tuples.
 		
-	\subsection*{take et read}
+	\subsection{take et read}
 		Ces deux méthodes sont quasiment les mêmes : on fait appel à la fonction \texttt{eventRegister} avec les bons paramètres et on appelle la fonction \texttt{wait} dans le bloc \texttt{synchronized}. Le \textit{callback} passé en paramètre est une instance de la classe interne \texttt{BlockingCallback} implémentant l'interface \texttt{Callback}. Le \texttt{call} de cette classe permet en fait de stocker le tuple dans l'attribut \texttt{result} et donc de le récupérer, puis de réveiller le processus en attente (ayant exécuté un \texttt{wait}) avec \texttt{notify.}
 		
 		Seule différence : si le tuple est présent avant l'exécution de \texttt{read}, il ne faut pas exécuter le \texttt{wait}.
 		
-	\subsection*{eventRegister}
+	\subsection{eventRegister}
 		Si le timing est \texttt{IMMEDIATE}, on exécute la méthode \texttt{tryRead} ou \texttt{tryTake} selon le cas. Si un tuple correspondant n'a pas été trouvé, on ajoute le tuple et son \textit{callback} aux opérations en attente. Sinon, on sort du bloc \texttt{synchronized} et on exécute le \textit{callback}.
 		
 		Si le timing est \texttt{FUTURE}, on ajoute simplement le tuple et son \textit{callback} à la liste des opérations en attente.
+		
+\section*{Remarques du second binôme}
+
+	Nous avons pris en compte les trois propositions d'amélioration du second binôme. La première était de remplacer les \texttt{if} des méthodes \texttt{read} et \texttt{take} par des \texttt{while}, ce que nous avons fait. Cela permet d'apporter plus de robustesse au programme, puisqu'il semble que le \texttt{wait} dans un bloc \texttt{synchronized} puisse être activé sans que le \texttt{notify} n'ait été appelé. 
+	
+	La deuxième remarque mettait en lumière le manque de commentaires, et nous avons rectifié le tir en en rajoutant là où il nous semblait en manquer, de façon à permettre une lecture plus facile et rapide de notre code.
+	
+	Enfin, nous n'avons pas corrigé la différence entre les méthodes \texttt{readAll} et \texttt{takeAll}. En effet, nous avions une bonne raison de ne pas les coder de la même façon et en particulier de ne pas utiliser le \texttt{tryRead} dans le \texttt{readAll} comme on utilise le \texttt{tryTake} dans le \texttt{takeAll} : le \texttt{take} retire le tuple de l'espace de tuple, celui-ci n'est donc plus considéré par la suite. Ce n'est pas le cas pour le \texttt{read} et un code du \texttt{readAll} symétrique à celui du \texttt{takeAll} impliquerait potentiellement (s'il y a au moins un tuple correspondant dans l'espace) une boucle infinie. La méthode la plus simple que nous ayons trouvée pour écrire le \texttt{readAll} reste donc notre première solution.
 	
 \end{document}
 
