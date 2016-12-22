@@ -85,6 +85,8 @@ public class BasicLindaScriptReader {
 				String name = currentLine[1];
 				Collection<Tuple> tl = linda.takeAll(hm.get(currentLine[2]));
 				hml.put(name,tl);
+			} else if (currentLine[0].equals("debug")) {
+				linda.debug("  ");
 			} else if (currentLine[0].equals("print")) {
 				if (currentLine.length == 1) {
 					System.out.println();
