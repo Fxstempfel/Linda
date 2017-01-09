@@ -13,8 +13,7 @@ import java.util.Collection;
 import linda.Callback;
 import linda.Tuple;
 
-public class LindaServer extends UnicastRemoteObject implements linda.monoserver.Linda {
-
+public class LindaServer extends UnicastRemoteObject implements linda.monoserver.ILindaServer {
 
 	protected LindaServer() throws RemoteException {
 		super();
@@ -63,27 +62,28 @@ public class LindaServer extends UnicastRemoteObject implements linda.monoserver
 		return tupleSpace.readAll(template);
 	}
 
-	public void eventRegister(linda.Linda.eventMode mode, linda.Linda.eventTiming timing, Tuple template)
+
+	public void eventRegister(linda.Linda.eventMode mode, linda.Linda.eventTiming timing, Tuple template,String URL_Callback)
 			throws RemoteException {
 		// TODO Auto-generated method stub
-		// Ajouter un bind du callback sur un serveur de nom du coté client
 		linda.server.CallbackClient rcallback;
 		try {
-			rcallback = (linda.server.CallbackClient) Naming.lookup("//tits-workstation:5556/monclient");
+			rcallback = (linda.server.CallbackClient) Naming.lookup(URL_Callback);
+			linda.Callback callbacktest = new Callback() {
 
-			if (mode == linda.Linda.eventMode.TAKE) {
-				if( timing == linda.Linda.eventTiming.IMMEDIATE){
-					tupleSpace.eventRegister(linda.Linda.eventMode.TAKE, linda.Linda.eventTiming.IMMEDIATE, template, rcallback.getCallback());
-				} else {
-					tupleSpace.eventRegister(linda.Linda.eventMode.TAKE, linda.Linda.eventTiming.FUTURE, template, rcallback.getCallback());
+				@Override
+				public void call(Tuple t) {
+					try {
+						rcallback.call(t);
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
-			} else {
-				if( timing == linda.Linda.eventTiming.IMMEDIATE){
-					tupleSpace.eventRegister(linda.Linda.eventMode.READ, linda.Linda.eventTiming.IMMEDIATE, template, rcallback.getCallback());
-				} else {
-					tupleSpace.eventRegister(linda.Linda.eventMode.READ, linda.Linda.eventTiming.FUTURE, template, rcallback.getCallback());
-				}
-			}
+			}; 
+			
+			
+			tupleSpace.eventRegister(mode, timing, template, callbacktest);
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -102,12 +102,13 @@ public class LindaServer extends UnicastRemoteObject implements linda.monoserver
 
 	public static void main(String[] args ) {
 		try{
-			Registry registry = LocateRegistry.createRegistry(5555);	
+			Registry registryLinda = LocateRegistry.createRegistry(5555);
+			Registry registryCallback = LocateRegistry.createRegistry(5556);
 			LindaServer linda = new LindaServer();
 			String URL = "//" + InetAddress.getLocalHost().getHostName() + ":" + 5555 + "/monserveur";
 			System.out.println(URL);
 			Naming.rebind(URL, linda);
-			
+
 		} catch (Exception exc) {
 			System.out.println("Probleme serveur : " + exc);
 		}

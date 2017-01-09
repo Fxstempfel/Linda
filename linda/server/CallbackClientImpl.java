@@ -3,7 +3,6 @@ package linda.server;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-import linda.Callback;
 import linda.Tuple;
 
 public class CallbackClientImpl extends UnicastRemoteObject implements CallbackClient  {
