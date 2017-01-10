@@ -1,6 +1,5 @@
-package linda.applications.Alignement.code;//v1 1/1/17 (PM)
 
-class Sequence implements java.io.Serializable {
+public class Sequence implements java.io.Serializable {
     private static final long serialVersionUID = 001L;
 
 // Séquence = PDB ID, Chain ID, Nom Macromolecule, Sequence, Longueur séquence

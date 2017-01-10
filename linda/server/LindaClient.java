@@ -21,7 +21,7 @@ public class LindaClient implements Linda {
 		try {
 			URL = "//" + InetAddress.getLocalHost().getHostName() + ":" + 5556 + "/monclient";
 			System.out.println(URL);
-			lindaRemote = (linda.monoserver.ILindaServer) Naming.lookup("//tits-workstation:5555/monserveur");
+			lindaRemote = (linda.monoserver.ILindaServer) Naming.lookup("//localhost:5555/monserveur");
 		} catch (MalformedURLException | RemoteException | NotBoundException | UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -1,7 +1,8 @@
-package linda;
+package linda.test;
 
 import static org.junit.Assert.assertEquals;
 
+import linda.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
