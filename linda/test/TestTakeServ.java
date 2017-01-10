@@ -1,0 +1,67 @@
+package linda.test;
+
+import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import linda.Tuple;
+import linda.Linda;
+
+import org.junit.Test;
+
+public class TestTakeServ {
+
+	final static Linda linda1 = new linda.server.LindaClient();
+	final static Linda linda2 = new linda.server.LindaClient();
+	final static Linda linda3 = new linda.server.LindaClient();
+    static Tuple t1 = new Tuple(4, 5);
+    static Tuple t11 = new Tuple(4, 5);
+    static Tuple t2 = new Tuple("hello", 15);
+    static Tuple t3 = new Tuple(4, "foo");
+    Tuple res;
+    Collection<Tuple> res2 = new ArrayList<Tuple>();
+
+	public void atest() {
+              
+        new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println("(1) write: " + t1);
+                linda1.write(t1);
+
+                System.out.println("(2) write: " + t11);
+                linda2.write(t11);
+
+                System.out.println("(2) write: " + t2);
+                linda2.write(t2);
+
+                System.out.println("(1) write: " + t3);
+                linda1.write(t3);
+                                
+                linda1.debug("(1)");
+
+            }
+        }.start();
+        
+        Tuple motif = new Tuple(Integer.class, String.class);
+        res = linda3.take(motif);
+        res2 = linda2.readAll(motif);
+        System.out.println("(3) Resultat:" + res);
+                
+    }
+
+	
+	@Test
+	public void test() {
+		atest();
+		assertEquals(t3,res);
+		assertTrue(res2.isEmpty());
+	}
+	
+
+}
