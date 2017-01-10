@@ -6,29 +6,34 @@ import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.Collection;
 
 import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
-import linda.monoserver.Linda.eventMode;
-import linda.monoserver.Linda.eventTiming;
 
 public class LindaClient implements Linda {
 
-	private linda.monoserver.Linda lindaRemote;
-	private Registry registry;
+	private linda.monoserver.ILindaServer lindaRemote;
 	private String URL ;
-	private static linda.monoserver.CallbackMono server;
 	public LindaClient() {
 		// TODO Auto-generated constructor stub
 		try {
-			registry = LocateRegistry.createRegistry(5556);
 			URL = "//" + InetAddress.getLocalHost().getHostName() + ":" + 5556 + "/monclient";
 			System.out.println(URL);
-			lindaRemote = (linda.monoserver.Linda) Naming.lookup("//tits-workstation:5555/monserveur");
+			lindaRemote = (linda.monoserver.ILindaServer) Naming.lookup("//tits-workstation:5555/monserveur");
+		} catch (MalformedURLException | RemoteException | NotBoundException | UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public LindaClient(String URL_Serveur) {
+		// TODO Auto-generated constructor stub
+		try {
+			URL = "//" + InetAddress.getLocalHost().getHostName() + ":" + 5556 + "/monclient";
+			System.out.println(URL);
+			lindaRemote = (linda.monoserver.ILindaServer) Naming.lookup(URL_Serveur);
 		} catch (MalformedURLException | RemoteException | NotBoundException | UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -122,25 +127,16 @@ public class LindaClient implements Linda {
 	public void eventRegister(eventMode mode, eventTiming timing, Tuple template, Callback callback) {
 		// TODO Auto-generated method stub
 		try {
-			CallbackClientImpl rcallback = new CallbackClientImpl(callback);
-				//server = (linda.monoserver.CallbackMono) Naming.lookup("//tits-workstation:5555/remoteCallback");
-				//server.register(rcallback);
-				this.registry.rebind(URL, rcallback);
-				// TODO Auto-generated catch block
-			if (mode == eventMode.TAKE) {
-				if( timing == eventTiming.IMMEDIATE){
-					lindaRemote.eventRegister(linda.Linda.eventMode.TAKE, linda.Linda.eventTiming.IMMEDIATE, template);
-				} else {
-					lindaRemote.eventRegister(linda.Linda.eventMode.TAKE, linda.Linda.eventTiming.FUTURE, template);
-				}
-			} else {
-				if( timing == eventTiming.IMMEDIATE){
-					lindaRemote.eventRegister(linda.Linda.eventMode.READ, linda.Linda.eventTiming.IMMEDIATE, template);
-				} else {
-					lindaRemote.eventRegister(linda.Linda.eventMode.READ, linda.Linda.eventTiming.FUTURE, template);
-				}
-			}
+			CallbackClient rcallback = new CallbackClientImpl(callback);
+			Naming.rebind(URL, rcallback);
+			System.out.println("callback binded to " + URL);
+			
+			
+			lindaRemote.eventRegister(mode, timing, template,URL);
 		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 

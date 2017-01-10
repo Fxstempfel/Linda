@@ -4,10 +4,9 @@ import java.rmi.Remote;
 import java.util.Collection;
 
 import linda.AsynchronousCallback;
-import linda.Callback;
 import linda.Tuple;
 
-public interface Linda extends  Remote {
+public interface ILindaServer extends  Remote {
 	
 	/** Adds a tuple t to the tuplespace. */
     public void write(Tuple t) throws java.rmi.RemoteException;
@@ -58,9 +57,10 @@ public interface Linda extends  Remote {
      * @param template the filtering template.
      * @param callback the callback to call if a matching tuple appears.
      */
-    public void eventRegister(linda.Linda.eventMode mode, linda.Linda.eventTiming timing, Tuple template) throws java.rmi.RemoteException;
+    public void eventRegister(linda.Linda.eventMode mode, linda.Linda.eventTiming timing, Tuple template,String URL_Callback) throws java.rmi.RemoteException;
 
     /** To debug, prints any information it wants (e.g. the tuples in tuplespace or the registered callbacks), prefixed by <code>prefix</code. */
     public void debug(String prefix) throws java.rmi.RemoteException;
+    
 
 }
