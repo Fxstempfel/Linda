@@ -39,7 +39,8 @@ public class AlignementSeq {
     public static void main(String[] args) throws InterruptedException {
         long départ, fin;
         int résultat;
-		int nbThreads = 100;
+		int nbThreads = 300;
+		int nbThreadsTr = 1;
 
 		String URL_Serv = "//fix-N550JK:5555/monserveur";
 		final Linda lindaClient = new linda.server.LindaClient(URL_Serv);
@@ -76,23 +77,25 @@ public class AlignementSeq {
 
 
 		départ = System.nanoTime();
-        résultat = AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,lindaClient);
+        résultat =
+		AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,nbThreadsTr,lindaClient);
         fin = System.nanoTime();
         System.out.println("test linda monoserver : durée = "+ (fin-départ) /1_000+
                 										"µs -> résultat : " + résultat);
 */
 		départ = System.nanoTime();
-        résultat = AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,lindaCtrl);
+        résultat =
+		AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,nbThreadsTr,lindaCtrl);
         fin = System.nanoTime();
         System.out.println("test linda centralized : durée = "+ (fin-départ) /1_000+
                 										"µs -> résultat : " + résultat);
-/*		départ = System.nanoTime();
+		départ = System.nanoTime();
         résultat =
-		AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,lindaShared);
+		AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,nbThreadsTr,lindaShared);
         fin = System.nanoTime();
         System.out.println("test linda shared: durée = "+ (fin-départ) /1_000+
                 										"µs -> résultat : " + résultat);
-*/
+
 
     }
 
@@ -171,9 +174,9 @@ public class AlignementSeq {
     }
 
 	static int AMonoLindaParallel(BDSequences BD,BDSequences BDcibles,int
-			position,int nbThreads,Linda l) {
+			position,int nbThreads,int nbThreadsTr,Linda l) {
 
-        int nbThreadsCharger = nbThreads-1;/* valeur a regler ! */
+        int nbThreadsCharger = nbThreads-nbThreadsTr;/* valeur a regler ! */
         Sequence courant = null;
         Sequence cible = BDcibles.lire(position);
         Iterator<Sequence> it = BD.itérateur();
@@ -188,7 +191,7 @@ public class AlignementSeq {
 		for (int k=0; k<nbThreads; k++) {
 		    if (k<nbThreadsCharger){
 		        listThreadsCharger.add(new
-						ThreadGenomeCharger(k,nbThreadsCharger,nbThreads,taillePartie,BD,l));
+						ThreadGenomeCharger(k,nbThreadsCharger,taillePartie,BD,l));
             } else {
 		        listThreadsTraiter.add(new ThreadGenomeTraiter(nbThreads-nbThreadsCharger,k,taillePartieTraiter,BD,BDcibles,position,l));
             }

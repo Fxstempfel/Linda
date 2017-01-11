@@ -8,15 +8,13 @@ public class ThreadGenomeCharger extends Thread {
 	private int threadNum;
 	private int taillePartie;
 	private BDSequences BD;
-	private int nbThreadsTot;
 
-	public ThreadGenomeCharger(int threadNum, int nbThreads, int nbThreadsTot, int taillePartie, BDSequences BD, Linda linda) {
+	public ThreadGenomeCharger(int threadNum, int nbThreads, int taillePartie, BDSequences BD, Linda linda) {
 		this.linda = linda;
 		this.taillePartie = taillePartie;
 		this.nbThreads = nbThreads;
 		this.BD = BD;
 		this.threadNum = threadNum;
-		this.nbThreadsTot = nbThreadsTot;
 	}
 
 	public void run() {
@@ -29,7 +27,7 @@ public class ThreadGenomeCharger extends Thread {
 		}
 		for (int i = threadNum*taillePartie; i < ind_top; i++){
 			courant = BD.lire(i);
-			this.linda.write(new Tuple(i%(nbThreadsTot-nbThreads),courant.lireSéquence(),courant.afficher()));
+			this.linda.write(new Tuple("BD",courant.lireSéquence(),courant.afficher()));
 		}
 	}
 }

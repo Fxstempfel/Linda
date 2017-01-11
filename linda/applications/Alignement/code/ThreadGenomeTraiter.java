@@ -37,7 +37,7 @@ public class ThreadGenomeTraiter extends Thread {
 			ind_top = (ind_th+1)*taillePartie;
 		}
 		for (int i=ind_th*taillePartie; i<ind_top; i++) {
-            tCourant = this.linda.take(new Tuple(ind_th,String.class,String.class));
+            tCourant = this.linda.take(new Tuple("BD",String.class,String.class));
             score = AlignementSeq.similitude(((String)tCourant.get(1)).toCharArray(),
                                ((String)tCible.get(1)).toCharArray());
             if (score > résultat) {
