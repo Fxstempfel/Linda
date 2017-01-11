@@ -59,7 +59,7 @@ public class SharedLinda implements Linda {
 					e.printStackTrace();
 				}
 			}
-		}
+		
 		boolean takeMatched = false;
 		for(Tuple template : pendingReads.keySet()){
 			if(t.matches(template)) {
@@ -80,6 +80,7 @@ public class SharedLinda implements Linda {
 				takeMatched = true;
 				break;
 			}
+		}
 		}
 		if(!takeMatched){
 			Random rand = new Random();
