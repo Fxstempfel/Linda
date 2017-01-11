@@ -60,32 +60,32 @@ public class SharedLinda implements Linda {
 				}
 			}
 		
-		boolean takeMatched = false;
-		for(Tuple template : pendingReads.keySet()){
-			if(t.matches(template)) {
-				for(Callback c : pendingReads.remove(template)) {
-					c.call(t.deepclone());
+			boolean takeMatched = false;
+			for(Tuple template : pendingReads.keySet()){
+				if(t.matches(template)) {
+					for(Callback c : pendingReads.remove(template)) {
+						c.call(t.deepclone());
+					}
 				}
 			}
-		}
-		for (Tuple template : pendingTakes.keySet()) {
-			if (t.matches(template)) {
-				Queue<Callback> queue = pendingTakes.get(template); 
-				// Remove the head of the queue
-				queue.remove().call(t.deepclone());
-				if (queue.isEmpty()) {
-					// Remove the key if there is no more pending takes
-					pendingTakes.remove(template);
+			for (Tuple template : pendingTakes.keySet()) {
+				if (t.matches(template)) {
+					Queue<Callback> queue = pendingTakes.get(template); 
+					// Remove the head of the queue
+					queue.remove().call(t.deepclone());
+					if (queue.isEmpty()) {
+						// Remove the key if there is no more pending takes
+						pendingTakes.remove(template);
+					}
+					takeMatched = true;
+					break;
 				}
-				takeMatched = true;
-				break;
 			}
-		}
-		}
-		if(!takeMatched){
-			Random rand = new Random();
-			int index = rand.nextInt(this.maxThreads);
-			this.lindaSpace.get(index).write(t);
+			if(!takeMatched){
+				Random rand = new Random();
+				int index = rand.nextInt(this.maxThreads);
+				this.lindaSpace.get(index).write(t);
+			}
 		}
 	}
 
