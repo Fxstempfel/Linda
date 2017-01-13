@@ -11,7 +11,7 @@ import org.junit.Test;
 
 public class TestTryTakeRead {
 
-	final static Linda linda = new linda.shm.CentralizedLinda();
+	final static Linda linda = new linda.shm.SharedLinda();
 	static Tuple t1 = new Tuple(4, 5);
 	static Tuple t11 = new Tuple(4, 5);
 	static Tuple t2 = new Tuple("hello", 15);

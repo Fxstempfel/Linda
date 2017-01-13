@@ -25,7 +25,7 @@ public class ThreadGenomeTraiter extends Thread {
 	public void run() {
 
 		Tuple tRes = null;
-		Tuple tCible = this.linda.take(new Tuple("cible", String.class, String.class, Integer.class));
+		Tuple tCible = this.linda.read(new Tuple("cible", String.class, String.class, Integer.class));
         Tuple tCourant = null;
         int score = 0;
 		int résultat = 0;

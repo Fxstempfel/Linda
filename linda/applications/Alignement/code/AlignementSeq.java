@@ -1,4 +1,5 @@
 //v0   3/1/17 (PM)
+import java.net.InetAddress;
 import java.io.IOException;
 import java.util.Iterator;
 import linda.*;
@@ -39,10 +40,15 @@ public class AlignementSeq {
     public static void main(String[] args) throws InterruptedException {
         long départ, fin;
         int résultat;
-		int nbThreads = 300;
-		int nbThreadsTr = 1;
+		int nbThreads = Integer.parseInt(args[2]);
+		int nbThreadsTr = Integer.parseInt(args[3]);
 
-		String URL_Serv = "//fix-N550JK:5555/monserveur";
+		String URL_Serv = "";
+		try {
+			URL_Serv = "//" + InetAddress.getLocalHost().getHostName() + ":" + 5555 + "/monserveur";
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		final Linda lindaClient = new linda.server.LindaClient(URL_Serv);
 		final Linda lindaCtrl = new linda.shm.CentralizedLinda();
 		final Linda lindaShared = new linda.shm.SharedLinda();
@@ -50,7 +56,7 @@ public class AlignementSeq {
         BDSequences BDS = new BDSequences();
         BDSequences cible = new BDSequences();
 
-        if (args.length == 2) { //analyse des paramètres
+        if (args.length == 4) { //analyse des paramètres
             try {
                 BDS.lier(args[0]);
                 cible.lier(args[1]);
@@ -75,14 +81,14 @@ public class AlignementSeq {
         System.out.println("test linda monoactivité : durée = "+ (fin-départ) /1_000+
                 										"µs -> résultat : " + résultat);
 
-
+*/
 		départ = System.nanoTime();
         résultat =
 		AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,nbThreadsTr,lindaClient);
         fin = System.nanoTime();
         System.out.println("test linda monoserver : durée = "+ (fin-départ) /1_000+
                 										"µs -> résultat : " + résultat);
-*/
+
 		départ = System.nanoTime();
         résultat =
 		AlignementSeq.AMonoLindaParallel(BDS,cible,0,nbThreads,nbThreadsTr,lindaCtrl);
@@ -179,7 +185,6 @@ public class AlignementSeq {
         int nbThreadsCharger = nbThreads-nbThreadsTr;/* valeur a regler ! */
         Sequence courant = null;
         Sequence cible = BDcibles.lire(position);
-        Iterator<Sequence> it = BD.itérateur();
         Tuple tCible = null;
         int résultat=0;
 
@@ -200,9 +205,7 @@ public class AlignementSeq {
 
         //déposer la cible dans l'espace de tuples
 		tCible = new Tuple("cible",cible.lireSéquence(),cible.afficher(),cible.lireTailleSeq());
-		for (int j=0; j<nbThreads-nbThreadsCharger; j++) {
-			l.write(new Tuple("cible",cible.lireSéquence(),cible.afficher(),cible.lireTailleSeq()));
-		}
+		l.write(tCible);
 
         //on lance tous les threads en meme temps
         for (int j=0; j<nbThreads; j++) {
@@ -212,20 +215,6 @@ public class AlignementSeq {
                 listThreadsTraiter.get(j-nbThreadsCharger).start();
             }
         }
-/*		int k = 0;
-		int thNum = 0;
-		String label = "BD0";
-        while (it.hasNext()) {
-            courant = it.next();
-            l.write(new Tuple(label,courant.lireSéquence(),courant.afficher()));
-			k++;
-			if (k == taillePartie && thNum != nbThreads) {
-				thNum++;
-				label = "BD" + thNum;
-				k = 0;
-			}
-        }
-*/
 
 
 		for (int j=0; j<nbThreads; j++) {
