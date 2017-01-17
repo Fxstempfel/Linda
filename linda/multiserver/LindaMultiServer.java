@@ -3,11 +3,10 @@ package linda.multiserver;
 import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
+import linda.monoserver.LindaServer;
 import linda.server.CallbackClient;
-import linda.shm.CentralizedLinda;
-import linda.shm.SharedLinda;
+import linda.server.LindaClient;
 
-import javax.print.DocFlavor;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -20,38 +19,32 @@ import java.util.*;
  */
 public class LindaMultiServer extends UnicastRemoteObject implements linda.monoserver.ILindaServer{
 
-    private List<CentralizedLinda> lindaSpace = new ArrayList<CentralizedLinda>();
-    private int maxThreads;
+    private List<LindaClient> lindaSpace = new ArrayList<LindaClient>();
     private Map<Tuple, Queue<CallbackClient>> pendingReads;
     private Map<Tuple, Queue<CallbackClient>> pendingTakes;
     private int nbPendingTakes;
     private int nbPendingReads;
+    private int nbServers;
     private boolean isReading;
+    private LindaServer node;
 
 
 
-    public LindaMultiServer() throws RemoteException {
+    public LindaMultiServer(List<String> serversURL, String currentServerURL) throws RemoteException {
         this.nbPendingTakes = 0;
         this.nbPendingReads = 0;
+        this.nbServers = serversURL.size();
         this.isReading = false;
-        this.maxThreads = 4;
         this.pendingReads = new HashMap<Tuple, Queue<CallbackClient>>();
         this.pendingTakes = new HashMap<Tuple, Queue<CallbackClient>>();
-        for (int i=0;i<maxThreads;i++) {
-            this.lindaSpace.add(new CentralizedLinda());
+        for (String URL: serversURL) {
+            this.lindaSpace.add(new LindaClient(URL));
         }
-    }
-
-
-    public LindaMultiServer(int maxThreads) throws RemoteException {
-        this.nbPendingTakes = 0;
-        this.nbPendingReads = 0;
-        this.isReading = false;
-        this.maxThreads = maxThreads;
-        this.pendingReads = new HashMap<Tuple, Queue<CallbackClient>>();
-        this.pendingTakes = new HashMap<Tuple, Queue<CallbackClient>>();
-        for (int i=0;i<maxThreads;i++) {
-            this.lindaSpace.add(new CentralizedLinda());
+        this.node = new LindaServer();
+        try {
+            Naming.rebind(currentServerURL, node);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -91,7 +84,7 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
             }
             if(!takeMatched){
                 Random rand = new Random();
-                int index = rand.nextInt(this.maxThreads);
+                int index = rand.nextInt(this.nbServers);
                 this.lindaSpace.get(index).write(t);
             }
         }
@@ -120,7 +113,7 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
                     break;
 
             }
-            localIndex = (localIndex + 1) % this.maxThreads;
+            localIndex = (localIndex + 1) % this.nbServers;
             if(localIndex == index) {
                 localIndex = -1;
             }
@@ -173,7 +166,7 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
             this.isReading = true;
         }
         Random rand = new Random();
-        int index = rand.nextInt(this.maxThreads);
+        int index = rand.nextInt(this.nbServers);
         t = accessFromIndex(index, Linda.eventMode.TAKE,template);
         synchronized(this) {
             this.isReading = false;
@@ -189,7 +182,7 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
             this.isReading = true;
         }
         Random rand = new Random();
-        int index = rand.nextInt(this.maxThreads);
+        int index = rand.nextInt(this.nbServers);
         t = accessFromIndex(index, Linda.eventMode.READ,template);
         synchronized(this) {
             this.isReading = false;
@@ -214,7 +207,7 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
                     break;
 
             }
-            localIndex = (localIndex + 1) % this.maxThreads;
+            localIndex = (localIndex + 1) % this.nbServers;
             if(localIndex == 0) {
                 localIndex = -1;
             }
@@ -257,7 +250,7 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
         synchronized (this) {
                 if (timing == Linda.eventTiming.IMMEDIATE) {
                     Random rand = new Random();
-                    int index = rand.nextInt(this.maxThreads);
+                    int index = rand.nextInt(this.nbServers);
                     t = accessFromIndex(index, mode, template);
                     if (t == null) {
                         // If the tuple was not found in the tupleSpace, add it to
