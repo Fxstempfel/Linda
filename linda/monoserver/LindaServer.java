@@ -15,7 +15,7 @@ import linda.Tuple;
 
 public class LindaServer extends UnicastRemoteObject implements linda.monoserver.ILindaServer {
 
-	protected LindaServer() throws RemoteException {
+	public LindaServer() throws RemoteException {
 		super();
 		// TODO Auto-generated constructor stub
 	}
