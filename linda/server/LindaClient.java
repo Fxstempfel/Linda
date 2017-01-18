@@ -32,13 +32,28 @@ public class LindaClient implements Linda {
 		// TODO Auto-generated constructor stub
 		try {
 			URL = "//" + InetAddress.getLocalHost().getHostName() + ":" + 5556 + "/monclient";
-			System.out.println(URL);
+			//System.out.println(URL);
 			lindaRemote = (linda.monoserver.ILindaServer) Naming.lookup(URL_Serveur);
 		} catch (MalformedURLException | RemoteException | NotBoundException | UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
+
+
+	public LindaClient(String servHostname, int servPort, int localPort) {
+		// TODO Auto-generated constructor stub
+		try {
+			String URL_Server = "//" + servHostname + ":" + servPort + "/monserveur";
+			URL = "//" + InetAddress.getLocalHost().getHostName() + ":" + localPort + "/monclient";
+			//System.out.println(URL);
+			lindaRemote = (linda.monoserver.ILindaServer) Naming.lookup(URL_Server);
+		} catch (MalformedURLException | RemoteException | NotBoundException | UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	@Override
 	public void write(Tuple t) {
 		// TODO Auto-generated method stub

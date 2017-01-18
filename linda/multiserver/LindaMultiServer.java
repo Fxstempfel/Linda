@@ -7,10 +7,14 @@ import linda.monoserver.LindaServer;
 import linda.server.CallbackClient;
 import linda.server.LindaClient;
 
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
@@ -19,6 +23,7 @@ import java.util.*;
  */
 public class LindaMultiServer extends UnicastRemoteObject implements linda.monoserver.ILindaServer{
 
+    private int port = 5555;
     private List<LindaClient> lindaSpace = new ArrayList<LindaClient>();
     private Map<Tuple, Queue<CallbackClient>> pendingReads;
     private Map<Tuple, Queue<CallbackClient>> pendingTakes;
@@ -29,25 +34,35 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
     private LindaServer node;
 
 
-
-    public LindaMultiServer(List<String> serversURL, String currentServerURL) throws RemoteException {
+    public LindaMultiServer(int port) throws RemoteException{
+        this.port = port;
         this.nbPendingTakes = 0;
         this.nbPendingReads = 0;
-        this.nbServers = serversURL.size();
+        this.nbServers = 1;
         this.isReading = false;
         this.pendingReads = new HashMap<Tuple, Queue<CallbackClient>>();
         this.pendingTakes = new HashMap<Tuple, Queue<CallbackClient>>();
-        for (String URL: serversURL) {
-            this.lindaSpace.add(new LindaClient(URL));
-        }
         this.node = new LindaServer();
         try {
-            Naming.rebind(currentServerURL, node);
+            Registry registry = LocateRegistry.createRegistry(port);
+            Registry registryCallbacks = LocateRegistry.createRegistry(port+1);
+            Naming.rebind( "//" + InetAddress.getLocalHost().getHostName() + ":" + port + "/monserveur", node);
+            this.lindaSpace.add(new LindaClient(InetAddress.getLocalHost().getHostName(),port,port+1));
         } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (UnknownHostException e) {
             e.printStackTrace();
         }
     }
 
+    public LindaClient getClient() throws RemoteException, UnknownHostException {
+        return this.lindaSpace.get(0);
+    }
+
+    public void addLindaClient(LindaClient lindaClient) throws RemoteException{
+        this.lindaSpace.add(lindaClient);
+        this.nbServers ++;
+    }
 
     @Override
     public void write(Tuple t) throws RemoteException {
