@@ -311,9 +311,10 @@ public class LindaMultiServer extends UnicastRemoteObject implements linda.monos
 
     @Override
     public void debug(String prefix) throws RemoteException{
-        int i=1;
+        int i = 1;
         for(Linda l : this.lindaSpace) {
-            l.debug("Linda Fragment number " + i );
+            l.debug("s"+i+">");
+            System.out.println("*****************************");
             i++;
         }
 

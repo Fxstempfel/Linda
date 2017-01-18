@@ -11,6 +11,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 import linda.Callback;
+import linda.Linda;
 import linda.Tuple;
 
 public class LindaServer extends UnicastRemoteObject implements linda.monoserver.ILindaServer {
@@ -24,7 +25,7 @@ public class LindaServer extends UnicastRemoteObject implements linda.monoserver
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private linda.shm.SharedLinda tupleSpace = new linda.shm.SharedLinda(1);
+	private Linda tupleSpace = new linda.shm.CentralizedLinda();
 
 
 	public void write(Tuple t) throws RemoteException {
