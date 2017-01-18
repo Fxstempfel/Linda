@@ -30,7 +30,9 @@ public class LindaCluster implements Linda{
         try {
             this.nbNodes = nbNodes;
             serverList = new ArrayList<>();
+            clientsList = new ArrayList<>();
             Registry reg = LocateRegistry.createRegistry(7500);
+            Registry registryCallback = LocateRegistry.createRegistry(5556);
             for (int i = 0; i < nbNodes; i++) {
                 try {
                     LindaMultiServer lms = new LindaMultiServer(7000 + 2 * i);
